@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+
+.stars, .twinkling, .clouds {
+	position: absolute;
+	top: 0; left: 0; right: 0; bottom: 0;
+	width: 100%;
+	min-height: 100%;
+	z-index: -1;
+	}
+
+	.stars {
+		z-index: 0;
+		background: #000 url('https://i.imgur.com/YKY28eT.png') repeat top center;
+	}
+
+	.twinkling{
+		z-index: 1;
+		background:transparent url('https://i.imgur.com/XYMF4ca.png') repeat top center;
+		animation: move-twink-back 200s linear infinite;
+	}
+
+	.clouds{
+		z-index: 2;
+		background:transparent url('https://i.imgur.com/mHbScrQ.png') repeat top center;
+		animation: move-clouds-back 200s linear infinite;
+	}
+
+	@keyframes move-twink-back {
+		from {background-position:0 0;}
+		to {background-position:-10000px 5000px;}
+	}
+
+	@keyframes move-clouds-back {
+		from {background-position:0 0;}
+		to {background-position:10000px 0;}
+	}
+
+
+	main {
+		min-height: 100vh;
+		display: flex;
+		justify-content: center;
+		z-index:10;
+		position:relative
+	}
+
+	#hero {
+		display: flex;
+		align-items: start;
+		flex-direction: column;
+		justify-content: center;
+		padding: 16px;
+	}
+
+	/* .teal-glow {
+		box-shadow: 0 0 18px 5px rgba(0, 245, 253, 0.4);
+        animation: glowBreathe s ease-in-out infinite;
+	} */
+
+	.soft-teal-glow {
+		box-shadow: 0 0 16px rgba(0, 245, 253, 0.9)
+	}
+
+
+    .teal-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: 2px;
+        overflow: hidden;
+        filter: blur(10px);
+        z-index: 0;
+      }
+      
+      .teal-glow::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300%;
+        height: 300%;
+        transform-origin: center;
+        background: conic-gradient(rgba(0,0,0,0), #00f4fd, rgba(0,0,0,0) 25%);
+        animation: spin-border 4s linear infinite;
+        transform: translate(-50%, -50%) rotate(0deg);
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      @keyframes spin-border {
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+  /* Full animation with delay */
+  .teal-glow.delay-0::before { animation: spin-border 4s linear infinite 0s; }
+  .teal-glow.delay-1::before { animation: spin-border 4s linear infinite 0.3s; }
+  .teal-glow.delay-2::before { animation: spin-border 4s linear infinite 0.6s; }
+  .teal-glow.delay-3::before { animation: spin-border 4s linear infinite 0.9s; }
+  .teal-glow.delay-4::before { animation: spin-border 4s linear infinite 1.2s; }
+  .teal-glow.delay-5::before { animation: spin-border 4s linear infinite 1.5s; }
+  
+  
