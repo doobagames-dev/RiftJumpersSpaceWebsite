@@ -1,29 +1,30 @@
-// The rift: a ray-traced Schwarzschild black hole fixed to the top of the
-// page, with only the bottom third of its shadow on screen. Two WebGL layers
-// share one fragment shader:
-//   - .rift-bg (behind the page): starfield bent by the hole's gravity.
-//   - .rift-fg (in front of the page): the shadow, the faint horizon ring and
-//     the thin disk strands, so swallowed elements vanish behind them.
+// The rift: a black hole fixed to the top of the page, with only the bottom
+// third of its shadow on screen. Two WebGL layers share one fragment shader:
+//   - .rift-bg (behind the page): a starfield ray-traced through the hole's
+//     gravity, so stars bend around it.
+//   - .rift-fg (in front of the page): the shadow, a faint horizon ring and
+//     the almond-eye strands, drawn as flat anti-aliased shapes so they stay
+//     crisp at full device resolution. Swallowed elements vanish behind them.
 // Every [data-suck] block spirals into the hole as it scrolls up toward it
 // and comes back out when you scroll back down: the transform is a pure
 // function of scroll position.
 //
 // Performance budget (phones especially):
 //   - The background is static, so it only re-renders when its size changes.
-//   - The foreground renders every frame but adapts its resolution to the
-//     measured frame rate, and phones march fewer, longer ray steps.
+//   - The foreground is cheap analytic shapes, rendered every frame at device
+//     resolution; it only drops a little resolution if frames run long.
 //   - Block positions are measured once (and on resize/layout change), then
 //     each frame only reads window.scrollY; transforms are written only when
 //     the scroll position changes, and only transform/opacity are animated.
 
 const ACCENT = [0 / 255, 244 / 255, 253 / 255];
-const TILT = (-7 * Math.PI) / 180; // camera slightly below the disk: almond-eye arcs under the hole
+const TILT = (-7 * Math.PI) / 180; // camera slightly below the hole's plane for the lensed starfield
 const PULL = 1; // how early blocks start being pulled in
 
 const MOBILE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
 const QUALITY = MOBILE
-	? { steps: 120, step: 0.08, fgBudget: 420000, fgCap: 0.75, bgBudget: 320000, bgCap: 0.6 }
-	: { steps: 220, step: 0.055, fgBudget: 1100000, fgCap: 1, bgBudget: 900000, bgCap: 0.75 };
+	? { steps: 120, step: 0.08, fgBudget: 1400000, fgCap: 2, bgBudget: 700000, bgCap: 1 }
+	: { steps: 220, step: 0.055, fgBudget: 3000000, fgCap: 2, bgBudget: 1600000, bgCap: 1 };
 
 const FRAG = `
 precision highp float;
@@ -37,18 +38,76 @@ uniform vec3 u_accent;
 uniform float u_feed;
 uniform float u_spin;
 
-// Units: Schwarzschild radius = 1. Shadow edge sits at b = 3*sqrt(3)/2.
-const float DIST = 22.0;
-const float TAN_SH = 0.1162;
-const float BCRIT = 2.598;
-const float RIN = 2.0;
-const float ROUT = 4.4;
-
 float hash13(vec3 p) {
   p = fract(p * 0.1031);
   p += dot(p, p.zyx + 31.32);
   return fract((p.x + p.y) * p.z);
 }
+
+#if MODE == 1
+
+// ---- Foreground: flat shapes in units of the shadow radius (y up). ----
+
+// One almond strand: the lower half of an eye shape y = -h * (1 - (x/w)^2)^0.7.
+// Returns its coverage at q with an anti-aliased ~1.2 css px core plus a soft glow.
+float strand(vec2 q, float h, float w) {
+  float u = q.x / w;
+  if (abs(u) >= 0.98) return 0.0;
+  float s = 1.0 - u * u;
+  float g = pow(s, 0.7);
+  float dg = -1.4 * u / w * pow(s, -0.3);
+  // Distance to the curve, first-order: |F| / |grad F| with F = y + h g(x).
+  float d = abs(q.y + h * g) / sqrt(1.0 + h * h * dg * dg) * u_R; // css px
+  float aa = 1.0 / u_scale;                                       // one device px
+  float core = clamp((0.6 - d) / aa + 0.5, 0.0, 1.0);
+  float glow = exp(-d / 3.5) * 0.14;
+  float fade = smoothstep(0.98, 0.7, abs(u)); // taper toward the eye's corners
+  return (core + glow) * fade;
+}
+
+void main() {
+  vec2 css = vec2(gl_FragCoord.x, u_res.y - gl_FragCoord.y) / u_scale;
+  vec2 q = (css - u_center) / u_R;
+  q.y = -q.y;
+  float r = length(q);
+  float aa = 1.0 / (u_R * u_scale);
+
+  // Shadow: a crisp black disc.
+  float shadow = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, r);
+
+  // Horizon: faint static white ring at the edge, soft rim inside, pale halo outside.
+  float edge = (r - 1.0) * u_R; // css px from the shadow edge
+  float ring = exp(-pow((edge - 1.2) / 1.1, 2.0)) * 0.24;
+  float rim = r < 1.0 ? exp(edge / 7.0) * 0.12 : 0.0;
+  float halo = r > 1.0 ? exp(-(r - 1.0) / 0.27) * 0.08 : 0.0;
+  float glowI = (ring + rim + halo) * (1.0 + 0.25 * u_feed);
+
+  // Strands: five nested arcs hugging the bottom of the shadow, brighter
+  // innermost and on one side, with a slow highlight drifting along them.
+  float strands = 0.0;
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i);
+    float h = 1.06 + 0.05 * fi;
+    float w = 1.45 + 0.17 * fi;
+    float amp = (1.0 - 0.15 * fi) * (0.9 + 0.12 * q.x / w);
+    strands += strand(q, h, w) * amp;
+  }
+  float drift = 0.82 + 0.18 * sin(q.x * 2.4 - u_time * 0.5 - u_spin * 1.5);
+  float strandI = strands * drift * (0.8 + 0.5 * u_feed);
+
+  vec3 glowCol = mix(vec3(1.0), u_accent, 0.12);
+  vec3 strandCol = mix(vec3(1.0), u_accent, 0.08);
+  vec3 rgb = glowCol * glowI + strandCol * strandI;
+  float alpha = shadow + (1.0 - shadow) * clamp(glowI + strandI, 0.0, 1.0);
+  gl_FragColor = vec4(rgb, alpha);
+}
+
+#else
+
+// ---- Background: starfield ray-traced around a Schwarzschild hole. ----
+// Units: Schwarzschild radius = 1. Shadow edge sits at b = 3*sqrt(3)/2.
+const float DIST = 22.0;
+const float TAN_SH = 0.1162;
 
 float vnoise(vec3 x) {
   vec3 i = floor(x);
@@ -73,27 +132,6 @@ float fbm(vec3 p) {
   return s / 0.875;
 }
 
-// Thin, white, tightly packed strands carrying dashes that orbit at Keplerian
-// speed. Lensing bends the far side into the arcs hugging the shadow.
-vec4 diskColor(vec3 p, vec3 rd) {
-  float rr = length(p.xz);
-  float om = pow(rr / RIN, -1.5);
-  float k = 15.0;
-  float idx = floor(rr * k / 6.2832 + 0.5);
-  float strand = pow(0.5 + 0.5 * cos(rr * k), 5.0);
-  float amp = 0.35 + 0.65 * hash13(vec3(idx, 3.7, 1.3));
-  float a = atan(p.z, p.x) + (u_time * 0.6 + u_spin) * om;
-  float dash = smoothstep(0.3, 0.6, vnoise(vec3(cos(a) * 5.0, sin(a) * 5.0, idx * 3.1)));
-  float env = smoothstep(RIN, RIN + 0.25, rr) * (1.0 - smoothstep(ROUT - 1.2, ROUT, rr));
-  float v = sqrt(0.5 / rr);
-  vec3 vdir = normalize(vec3(-p.z, 0.0, p.x));
-  float g = sqrt(1.0 - v * v) / (1.0 - v * dot(vdir, -rd)) * sqrt(1.0 - 1.0 / rr);
-  float dop = mix(1.0, pow(g, 3.0), 0.45);
-  float I = env * (strand * amp * (0.3 + 0.7 * dash) * 1.5 + 0.05) * dop * (1.0 + 0.6 * u_feed);
-  vec3 col = mix(vec3(1.0), u_accent, 0.15 * (1.0 - strand)) * (0.85 + 0.5 * I);
-  return vec4(col, clamp(I, 0.0, 0.95));
-}
-
 vec3 stars(vec3 d) {
   vec3 col = vec3(0.0);
   for (int L = 0; L < 2; L++) {
@@ -107,7 +145,7 @@ vec3 stars(vec3 d) {
     if (h > th) {
       vec3 sp = vec3(hash13(c + 1.7), hash13(c + 4.3), hash13(c + 9.1)) * 0.7 + 0.15;
       float b = smoothstep(rad, 0.0, length(f - sp));
-      float tw = 0.7 + 0.3 * sin(u_time * (1.0 + h * 3.0) + h * 40.0);
+      float tw = 0.7 + 0.3 * sin(h * 40.0);
       vec3 tint = mix(vec3(0.75, 0.85, 1.0), mix(vec3(1.0, 0.9, 0.8), u_accent, step(0.5, fract(h * 7.0))), fract(h * 13.0) * 0.6);
       col += tint * b * tw * (L == 0 ? 0.9 : 1.6);
     }
@@ -116,7 +154,7 @@ vec3 stars(vec3 d) {
 }
 
 vec3 nebula(vec3 d) {
-  float n = fbm(d * 2.2 + vec3(0.0, 0.0, u_time * 0.004));
+  float n = fbm(d * 2.2);
   float m = fbm(d * 4.5 + 3.0);
   vec3 c = mix(vec3(0.010, 0.032, 0.028), vec3(0.05, 0.02, 0.09), smoothstep(0.35, 0.75, m));
   return c * smoothstep(0.3, 0.8, n) * 1.4;
@@ -136,7 +174,6 @@ void main() {
   vec3 rd = normalize(fw + rt * uv.x + up * uv.y);
   float b = length(cross(cam, rd));
 
-  vec4 acc = vec4(0.0);
   float captured = 0.0;
   float minR = b;
   vec3 outDir;
@@ -154,46 +191,16 @@ void main() {
     for (int i = 0; i < MAX_STEPS; i++) {
       float r = length(pos);
       float dt = clamp(STEP * r, 0.015, 1.0);
-      vec3 prev = pos;
       vel += -1.5 * h2 * pos / (r * r * r * r * r) * dt;
       pos += vel * dt;
-#if MODE == 1
-      if (prev.y * pos.y < 0.0) {
-        float t = prev.y / (prev.y - pos.y);
-        vec3 hit = mix(prev, pos, t);
-        float rr = length(hit.xz);
-        if (rr > RIN && rr < ROUT) {
-          vec4 dc = diskColor(hit, normalize(vel));
-          acc.rgb += (1.0 - acc.a) * dc.rgb * dc.a;
-          acc.a += (1.0 - acc.a) * dc.a;
-        }
-      }
-#endif
       r = length(pos);
       minR = min(minR, r);
       if (r < 1.0) { captured = 1.0; break; }
       if (r > 28.0 && dot(pos, vel) > 0.0) break;
-      if (acc.a > 0.98) break;
     }
     outDir = normalize(vel);
   }
 
-#if MODE == 1
-  // Event-horizon ring: a faint, static white photon ring at the shadow edge,
-  // a soft rim just inside it and a pale halo outside.
-  float ang = atan(uv.y, uv.x);
-  vec2 cs = vec2(cos(ang), sin(ang));
-  float streak = 0.5 + 0.5 * vnoise(vec3(cs * 6.0, 0.5));
-  float ringI = exp(-pow((b - 2.64) / 0.04, 2.0)) * 0.22 * (0.7 + 0.3 * streak);
-  float rim = b < BCRIT ? exp(-(BCRIT - b) / 0.1) * 0.12 : 0.0;
-  float halo = b > BCRIT ? exp(-(b - BCRIT) / 0.7) * 0.08 : 0.0;
-  float glowI = (ringI + rim + halo) * (1.0 + 0.25 * u_feed);
-  vec3 glowCol = mix(vec3(1.0), u_accent, 0.12);
-  float alphaOut = captured > 0.5 ? 1.0 : acc.a;
-  vec3 rgb = acc.rgb + glowCol * glowI * (1.0 - 0.5 * acc.a);
-  alphaOut = alphaOut + (1.0 - alphaOut) * clamp(glowI, 0.0, 1.0);
-  gl_FragColor = vec4(rgb, alphaOut);
-#else
   vec3 col = vec3(0.0);
   if (captured < 0.5) {
     col = stars(outDir) + nebula(outDir);
@@ -201,8 +208,9 @@ void main() {
     col += vec3(0.85, 0.9, 1.0) * glow * 0.08;
   }
   gl_FragColor = vec4(col, 1.0);
-#endif
 }
+
+#endif
 `;
 
 const UNIFORMS = ['u_res', 'u_scale', 'u_center', 'u_R', 'u_time', 'u_tilt', 'u_accent', 'u_feed', 'u_spin'];
@@ -269,10 +277,9 @@ function draw(r, P, quality) {
 	const cw = r.cssW;
 	const ch = r.cssH;
 	if (!cw || !ch) return;
-	// The background is soft starlight, so it renders at reduced resolution;
-	// the foreground (horizon ring + disk strands) stays near 1:1 to keep lines crisp.
+	// Both layers render at device resolution (up to 2x), within a pixel budget.
 	const budget = r.mode === 1 ? QUALITY.fgBudget : QUALITY.bgBudget;
-	const cap = r.mode === 1 ? Math.min(QUALITY.fgCap, window.devicePixelRatio || 1) : QUALITY.bgCap;
+	const cap = Math.min(r.mode === 1 ? QUALITY.fgCap : QUALITY.bgCap, window.devicePixelRatio || 1);
 	const s = Math.min(cap, Math.sqrt(budget / (cw * ch))) * quality;
 	const W = Math.max(1, Math.round(cw * s));
 	const H = Math.max(1, Math.round(ch * s));
@@ -346,8 +353,9 @@ export function initRift(root) {
 		});
 	}
 
-	// Adaptive foreground resolution: drop it when frames run long, creep back
-	// up when there is headroom. `refresh` tracks the display's frame interval.
+	// Foreground resolution backs off a little if frames run long and creeps
+	// back up when there is headroom. The floor keeps strand edges smooth.
+	// `refresh` tracks the display's frame interval.
 	let quality = 1;
 	let frameMs = 16.7;
 	let refresh = 16.7;
@@ -369,11 +377,11 @@ export function initRift(root) {
 			const d = Math.min(100, now - lastFrame);
 			frameMs += (d - frameMs) * 0.1;
 			refresh = Math.min(d, refresh + 0.02);
-			if (frameMs > refresh * 1.35 && quality > 0.45 && now - lastAdjust > 400) {
-				quality = Math.max(0.45, quality - 0.1);
+			if (frameMs > refresh * 1.35 && quality > 0.75 && now - lastAdjust > 400) {
+				quality = Math.max(0.75, quality - 0.125);
 				lastAdjust = now;
 			} else if (frameMs < refresh * 1.1 && quality < 1 && now - lastAdjust > 2000) {
-				quality = Math.min(1, quality + 0.05);
+				quality = Math.min(1, quality + 0.125);
 				lastAdjust = now;
 			}
 		}
@@ -397,7 +405,7 @@ export function initRift(root) {
 		lastScroll = scrollY;
 		if (scrolled || relayout) pulling = applyPull(scrollY, R, cx, cy);
 
-		// The disk brightens while it feeds and its dashes speed up with scroll.
+		// The strands brighten while the hole feeds and their highlight drifts with scroll.
 		feed += (Math.min(1, pulling * 0.45) - feed) * 0.08;
 		spin += vel * 0.0025;
 
