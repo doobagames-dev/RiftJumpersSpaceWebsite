@@ -7,10 +7,23 @@
 // Every [data-suck] block spirals into the hole as it scrolls up toward it
 // and comes back out when you scroll back down: the transform is a pure
 // function of scroll position.
+//
+// Performance budget (phones especially):
+//   - The background is static, so it only re-renders when its size changes.
+//   - The foreground renders every frame but adapts its resolution to the
+//     measured frame rate, and phones march fewer, longer ray steps.
+//   - Block positions are measured once (and on resize/layout change), then
+//     each frame only reads window.scrollY; transforms are written only when
+//     the scroll position changes, and only transform/opacity are animated.
 
 const ACCENT = [0 / 255, 244 / 255, 253 / 255];
 const TILT = (-7 * Math.PI) / 180; // camera slightly below the disk: almond-eye arcs under the hole
 const PULL = 1; // how early blocks start being pulled in
+
+const MOBILE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+const QUALITY = MOBILE
+	? { steps: 120, step: 0.08, fgBudget: 420000, fgCap: 0.75, bgBudget: 320000, bgCap: 0.6 }
+	: { steps: 220, step: 0.055, fgBudget: 1100000, fgCap: 1, bgBudget: 900000, bgCap: 0.75 };
 
 const FRAG = `
 precision highp float;
@@ -138,9 +151,9 @@ void main() {
     vec3 pos = cam;
     vec3 vel = rd;
     float h2 = b * b;
-    for (int i = 0; i < 220; i++) {
+    for (int i = 0; i < MAX_STEPS; i++) {
       float r = length(pos);
-      float dt = clamp(0.055 * r, 0.015, 1.0);
+      float dt = clamp(STEP * r, 0.015, 1.0);
       vec3 prev = pos;
       vel += -1.5 * h2 * pos / (r * r * r * r * r) * dt;
       pos += vel * dt;
@@ -185,7 +198,7 @@ void main() {
   if (captured < 0.5) {
     col = stars(outDir) + nebula(outDir);
     float glow = exp(-max(minR - 1.5, 0.0) * 0.9);
-    col += vec3(0.85, 0.9, 1.0) * glow * (0.07 + 0.2 * u_feed);
+    col += vec3(0.85, 0.9, 1.0) * glow * 0.08;
   }
   gl_FragColor = vec4(col, 1.0);
 #endif
@@ -221,7 +234,11 @@ function makeGL(canvas, mode) {
 		return sh;
 	};
 	const vs = compile(gl.VERTEX_SHADER, 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }');
-	const fs = compile(gl.FRAGMENT_SHADER, `#define MODE ${mode}\n${FRAG}`);
+	const defines =
+		`#define MODE ${mode}\n` +
+		`#define MAX_STEPS ${QUALITY.steps}\n` +
+		`#define STEP ${QUALITY.step.toFixed(3)}\n`;
+	const fs = compile(gl.FRAGMENT_SHADER, defines + FRAG);
 	if (!vs || !fs) return null;
 
 	const prog = gl.createProgram();
@@ -243,19 +260,20 @@ function makeGL(canvas, mode) {
 
 	const u = {};
 	for (const name of UNIFORMS) u[name] = gl.getUniformLocation(prog, name);
-	return { canvas, gl, prog, u, mode };
+	// cssW/cssH are kept current by a ResizeObserver so drawing never forces layout.
+	return { canvas, gl, prog, u, mode, cssW: canvas.clientWidth, cssH: canvas.clientHeight, dirty: true };
 }
 
-function draw(r, P) {
+function draw(r, P, quality) {
 	const { gl, canvas: c, u } = r;
-	const cw = c.clientWidth;
-	const ch = c.clientHeight;
+	const cw = r.cssW;
+	const ch = r.cssH;
 	if (!cw || !ch) return;
 	// The background is soft starlight, so it renders at reduced resolution;
 	// the foreground (horizon ring + disk strands) stays near 1:1 to keep lines crisp.
-	const budget = r.mode === 1 ? 1100000 : 520000;
-	const cap = r.mode === 1 ? Math.min(1, window.devicePixelRatio || 1) : 0.6;
-	const s = Math.min(cap, Math.sqrt(budget / (cw * ch)));
+	const budget = r.mode === 1 ? QUALITY.fgBudget : QUALITY.bgBudget;
+	const cap = r.mode === 1 ? Math.min(QUALITY.fgCap, window.devicePixelRatio || 1) : QUALITY.bgCap;
+	const s = Math.min(cap, Math.sqrt(budget / (cw * ch))) * quality;
 	const W = Math.max(1, Math.round(cw * s));
 	const H = Math.max(1, Math.round(ch * s));
 	if (c.width !== W || c.height !== H) {
@@ -280,7 +298,7 @@ function release(child) {
 	child.style.transform = '';
 	child.style.transformOrigin = '';
 	child.style.opacity = '';
-	child.style.filter = '';
+	child.style.willChange = '';
 	child.__sucked = false;
 }
 
@@ -293,75 +311,91 @@ export function initRift(root) {
 	const fg = makeGL(fgEl, 1);
 	if (!bg || !fg) root.classList.add('no-gl');
 
+	// Keep canvas sizes cached; any size change also means block positions moved.
+	let layoutDirty = true;
+	const sizeObserver = new ResizeObserver((entries) => {
+		for (const entry of entries) {
+			const layer = entry.target === bgEl ? bg : entry.target === fgEl ? fg : null;
+			if (layer) {
+				layer.cssW = entry.contentRect.width;
+				layer.cssH = entry.contentRect.height;
+				layer.dirty = true;
+			}
+		}
+		layoutDirty = true;
+	});
+	if (bgEl) sizeObserver.observe(bgEl);
+	if (fgEl) sizeObserver.observe(fgEl);
+	sizeObserver.observe(root); // page height changes when images and fonts load
+	if (document.fonts) document.fonts.ready.then(() => { layoutDirty = true; });
+
+	// Block anchors in page coordinates. The [data-suck] wrappers are never
+	// transformed, so measuring them is always exact.
+	let boxes = [];
+	function measure() {
+		const scrollY = window.scrollY;
+		boxes = Array.from(root.querySelectorAll('[data-suck]'), (el) => {
+			const r = el.getBoundingClientRect();
+			return {
+				child: el.firstElementChild,
+				x: r.left + r.width / 2,
+				top: r.top + scrollY,
+				w: r.width,
+				anchorOff: Math.min(r.height * 0.5, 140),
+			};
+		});
+	}
+
+	// Adaptive foreground resolution: drop it when frames run long, creep back
+	// up when there is headroom. `refresh` tracks the display's frame interval.
+	let quality = 1;
+	let frameMs = 16.7;
+	let refresh = 16.7;
+	let lastFrame = 0;
+	let lastAdjust = 0;
+	document.addEventListener('visibilitychange', () => { lastFrame = 0; });
+
 	const t0 = performance.now();
 	let spin = 0;
 	let vel = 0;
 	let feed = 0;
-	let prevTop = null;
+	let pulling = 0;
+	let lastScroll = null;
 
 	function frame(now) {
 		requestAnimationFrame(frame);
 
-		const vw = (bgEl && bgEl.clientWidth) || window.innerWidth;
-		const R = fgEl && fgEl.clientHeight
-			? fgEl.clientHeight / 2.2
+		if (lastFrame) {
+			const d = Math.min(100, now - lastFrame);
+			frameMs += (d - frameMs) * 0.1;
+			refresh = Math.min(d, refresh + 0.02);
+			if (frameMs > refresh * 1.35 && quality > 0.45 && now - lastAdjust > 400) {
+				quality = Math.max(0.45, quality - 0.1);
+				lastAdjust = now;
+			} else if (frameMs < refresh * 1.1 && quality < 1 && now - lastAdjust > 2000) {
+				quality = Math.min(1, quality + 0.05);
+				lastAdjust = now;
+			}
+		}
+		lastFrame = now;
+
+		const vw = (bg && bg.cssW) || window.innerWidth;
+		const R = fg && fg.cssH
+			? fg.cssH / 2.2
 			: Math.min(380, Math.max(80, Math.min(vw * 0.26, window.innerHeight * 0.21)));
 		const cx = vw / 2;
 		const cy = -R / 3; // center sits above the viewport: only the bottom third shows
-		const yStart = cy + R * (1.35 + 0.5 * PULL);
-		const yEnd = cy + R * 0.5;
 
-		// Read every anchor first, then write transforms (no layout thrash).
-		const items = root.querySelectorAll('[data-suck]');
-		const rects = Array.from(items, (el) => el.getBoundingClientRect());
-
-		if (rects.length) {
-			const top = rects[0].top;
-			if (prevTop !== null) vel += (prevTop - top - vel) * 0.15;
-			prevTop = top;
+		const relayout = layoutDirty;
+		if (layoutDirty) {
+			measure();
+			layoutDirty = false;
 		}
-
-		let pulling = 0;
-		items.forEach((el, i) => {
-			const child = el.firstElementChild;
-			if (!child) return;
-			const r = rects[i];
-			const anchorOff = Math.min(r.height * 0.5, 140);
-			const ax = r.left + r.width / 2;
-			const ay = r.top + anchorOff;
-			const t = reduce ? 0 : Math.max(0, Math.min(1, (yStart - ay) / (yStart - yEnd)));
-			if (t <= 0) {
-				if (child.__sucked) release(child);
-				return;
-			}
-			pulling += Math.sin(Math.PI * t);
-
-			// Spiral the anchor toward the hole's center while shrinking,
-			// stretching along the infall direction and dimming.
-			const e = t * t;
-			const rx = ax - cx;
-			const ry = ay - cy;
-			const th = e * 1.15;
-			const s = 1 - e;
-			const nx = (rx * Math.cos(th) - ry * Math.sin(th)) * s;
-			const ny = (rx * Math.sin(th) + ry * Math.cos(th)) * s;
-			const tx = cx + nx - ax;
-			const ty = cy + ny - ay;
-			const phi = Math.atan2(-ny, -nx);
-			const k = Math.max(0.04, 1 - 0.94 * e);
-			const sx = 1 + 0.9 * e * e;
-			const sy = 1 - 0.45 * e;
-			const fade = t < 0.8 ? 1 : 1 - (t - 0.8) / 0.2;
-
-			child.style.transformOrigin = `${(r.width / 2).toFixed(1)}px ${anchorOff.toFixed(1)}px`;
-			child.style.transform =
-				`translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) ` +
-				`rotate(${phi.toFixed(4)}rad) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) rotate(${(-phi).toFixed(4)}rad) ` +
-				`rotate(${th.toFixed(4)}rad) scale(${k.toFixed(4)})`;
-			child.style.opacity = Math.max(0, fade).toFixed(3);
-			child.style.filter = `blur(${(e * 4).toFixed(2)}px) brightness(${(1 - 0.55 * e).toFixed(3)})`;
-			child.__sucked = true;
-		});
+		const scrollY = window.scrollY;
+		const scrolled = scrollY !== lastScroll;
+		vel += ((lastScroll === null ? 0 : scrollY - lastScroll) - vel) * 0.15;
+		lastScroll = scrollY;
+		if (scrolled || relayout) pulling = applyPull(scrollY, R, cx, cy);
 
 		// The disk brightens while it feeds and its dashes speed up with scroll.
 		feed += (Math.min(1, pulling * 0.45) - feed) * 0.08;
@@ -375,8 +409,60 @@ export function initRift(root) {
 			feed,
 			spin,
 		};
-		if (bg) draw(bg, P);
-		if (fg) draw(fg, P);
+		// The lensed starfield never changes on its own: draw it only when resized.
+		if (bg && bg.dirty) {
+			draw(bg, P, 1);
+			bg.dirty = false;
+		}
+		if (fg) draw(fg, P, quality);
+	}
+
+	function applyPull(scrollY, R, cx, cy) {
+		const yStart = cy + R * (1.35 + 0.5 * PULL);
+		const yEnd = cy + R * 0.5;
+		let total = 0;
+		for (const box of boxes) {
+			const child = box.child;
+			if (!child) continue;
+			const ax = box.x;
+			const ay = box.top - scrollY + box.anchorOff;
+			const t = reduce ? 0 : Math.max(0, Math.min(1, (yStart - ay) / (yStart - yEnd)));
+			if (t <= 0) {
+				if (child.__sucked) release(child);
+				continue;
+			}
+			total += Math.sin(Math.PI * t);
+
+			// Spiral the anchor toward the hole's center while shrinking and
+			// stretching along the infall direction. Only transform and opacity
+			// change, so the browser can composite without repainting.
+			const e = t * t;
+			const rx = ax - cx;
+			const ry = ay - cy;
+			const th = e * 1.15;
+			const s = 1 - e;
+			const nx = (rx * Math.cos(th) - ry * Math.sin(th)) * s;
+			const ny = (rx * Math.sin(th) + ry * Math.cos(th)) * s;
+			const tx = cx + nx - ax;
+			const ty = cy + ny - ay;
+			const phi = Math.atan2(-ny, -nx);
+			const k = Math.max(0.04, 1 - 0.94 * e);
+			const sx = 1 + 0.9 * e * e;
+			const sy = 1 - 0.45 * e;
+			const fade = t < 0.65 ? 1 : 1 - (t - 0.65) / 0.35;
+
+			if (!child.__sucked) {
+				child.style.willChange = 'transform, opacity';
+				child.__sucked = true;
+			}
+			child.style.transformOrigin = `${(box.w / 2).toFixed(1)}px ${box.anchorOff.toFixed(1)}px`;
+			child.style.transform =
+				`translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) ` +
+				`rotate(${phi.toFixed(4)}rad) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) rotate(${(-phi).toFixed(4)}rad) ` +
+				`rotate(${th.toFixed(4)}rad) scale(${k.toFixed(4)})`;
+			child.style.opacity = Math.max(0, fade).toFixed(3);
+		}
+		return total;
 	}
 
 	requestAnimationFrame(frame);

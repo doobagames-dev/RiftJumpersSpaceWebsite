@@ -51,9 +51,13 @@ html {
 
 .rift-bg {
 	position: fixed;
-	inset: 0;
+	left: 0;
+	top: 0;
 	width: 100%;
-	height: 100%;
+	/* lvh: the largest viewport, so the mobile URL bar showing/hiding never
+	   resizes (and re-renders) the starfield. */
+	height: 100vh;
+	height: 100lvh;
 	z-index: 0;
 	display: block;
 	pointer-events: none;

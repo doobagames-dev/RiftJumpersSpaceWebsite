@@ -1,4 +1,5 @@
 ---
+import { Image, getImage } from 'astro:assets';
 import ship1 from '../assets/image/ship-1.png';
 import ship2 from '../assets/image/ship-2.png';
 import ship3 from '../assets/image/ship-3.png';
@@ -9,7 +10,8 @@ import bodyGas from '../assets/image/body-gas.png';
 import bodyIce from '../assets/image/body-ice.png';
 import kylerPhoto from '../assets/image/kyler.jpg';
 import gameplayPoster from '../assets/video/planet-jump.png';
-import gameplayVideo from '../assets/video/planet-jump.mp4';
+// 720p60 H.264 re-encode of planet-jump.mp4 (26 MB → 5.9 MB), faststart for quick playback.
+import gameplayVideo from '../assets/video/planet-jump-720p.mp4';
 import "../styles/global.css";
 import "../styles/rift.css";
 
@@ -28,6 +30,10 @@ const worlds = [
 ];
 
 const run = ['Survive the black hole.', 'Fight off enemies.', 'Collect space weapons.'];
+
+// The source poster is a 2772px, 1.9 MB PNG; ship it as a ~1600px WebP instead.
+const poster = await getImage({ src: gameplayPoster, width: 1600, format: 'webp', quality: 72 });
+const photoSizes = '(min-width: 700px) 520px, calc(100vw - 64px)';
 
 const appleIcon = 'M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z';
 const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z';
@@ -89,7 +95,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 		<div data-suck>
 			<figure class="rift-video">
 				<div class="rift-video-frame">
-					<video id="game-video" poster={gameplayPoster.src} preload="metadata" playsinline>
+					<video id="game-video" poster={poster.src} preload="none" playsinline>
 						<source src={gameplayVideo} type="video/mp4" />
 						Your browser does not support the video tag.
 					</video>
@@ -128,7 +134,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 		<div class="rift-grid rift-grid-4">
 			{ships.map((ship) => (
 				<div data-suck>
-					<div class="rift-tile"><img src={ship.src.src} alt={ship.alt} loading="lazy" /></div>
+					<div class="rift-tile"><Image src={ship.src} alt={ship.alt} width={360} format="webp" /></div>
 				</div>
 			))}
 		</div>
@@ -136,7 +142,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 			{worlds.map((world) => (
 				<div data-suck>
 					<div class="rift-world">
-						<img src={world.src.src} alt="" loading="lazy" />
+						<Image src={world.src} alt="" width={100} format="webp" />
 						<span class="rift-display">{world.name}</span>
 					</div>
 				</div>
@@ -211,7 +217,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 				<article class="rift-card rift-member">
 					<div class="rift-photo">
 						<span aria-hidden="true">AZ</span>
-						<img src="https://alexzahnaudio.com/assets/img/about.png" alt="Portrait of Alex Zahn" loading="lazy" />
+						<Image src="https://alexzahnaudio.com/assets/img/about.png" inferSize alt="Portrait of Alex Zahn" widths={[480, 800, 1040]} sizes={photoSizes} format="webp" />
 					</div>
 					<div class="rift-member-body">
 						<h3 class="rift-display">Alex Zahn</h3>
@@ -227,7 +233,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 				<article class="rift-card rift-member">
 					<div class="rift-photo">
 						<span aria-hidden="true">KG</span>
-						<img src={kylerPhoto.src} alt="Kyler Gronner on a campus bench holding two white dogs" loading="lazy" style="object-position: 50% 30%;" />
+						<Image src={kylerPhoto} alt="Kyler Gronner on a campus bench holding two white dogs" widths={[480, 769]} sizes={photoSizes} format="webp" style="object-position: 50% 30%;" />
 					</div>
 					<div class="rift-member-body">
 						<h3 class="rift-display">Kyler Gronner</h3>
