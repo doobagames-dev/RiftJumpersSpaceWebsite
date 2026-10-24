@@ -13,9 +13,11 @@
 //   - The background is static, so it only re-renders when its size changes.
 //   - The foreground is cheap analytic shapes, rendered every frame at device
 //     resolution; it only drops a little resolution if frames run long.
-//   - Block positions are measured once (and on resize/layout change), then
-//     each frame only reads window.scrollY; transforms are written only when
-//     the scroll position changes, and only transform/opacity are animated.
+//   - Where supported (Chrome, Safari 26+), the pull-in runs as scroll-driven
+//     animations, so it moves in lockstep with the scroll instead of a frame
+//     behind it. Elsewhere, script writes transforms when the scroll moves.
+//   - Block positions are measured once (and on resize/layout change), and
+//     only transform/opacity are animated.
 
 const ACCENT = [0 / 255, 244 / 255, 253 / 255];
 const TILT = (-7 * Math.PI) / 180; // camera slightly below the hole's plane for the lensed starfield
@@ -301,6 +303,40 @@ function draw(r, P, quality) {
 	gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 
+// Pose of a block at pull progress t (0 = resting, 1 = swallowed). Its anchor
+// spirals toward the hole's center while it shrinks and stretches along the
+// infall direction. Only transform and opacity change, so the browser can
+// composite without repainting.
+function pose(box, t, g) {
+	const e = t * t;
+	const ax = box.x;
+	const ay = g.yStart - t * (g.yStart - g.yEnd);
+	const rx = ax - g.cx;
+	const ry = ay - g.cy;
+	const th = e * 1.15;
+	const s = 1 - e;
+	const nx = (rx * Math.cos(th) - ry * Math.sin(th)) * s;
+	const ny = (rx * Math.sin(th) + ry * Math.cos(th)) * s;
+	const tx = g.cx + nx - ax;
+	const ty = g.cy + ny - ay;
+	const phi = Math.atan2(-ny, -nx);
+	const k = Math.max(0.04, 1 - 0.94 * e);
+	const sx = 1 + 0.9 * e * e;
+	const sy = 1 - 0.45 * e;
+	const fade = t < 0.65 ? 1 : 1 - (t - 0.65) / 0.35;
+	return {
+		transform:
+			`translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) ` +
+			`rotate(${phi.toFixed(4)}rad) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) rotate(${(-phi).toFixed(4)}rad) ` +
+			`rotate(${th.toFixed(4)}rad) scale(${k.toFixed(4)})`,
+		opacity: Math.max(0, fade),
+	};
+}
+
+// Scroll-driven animations run in step with the scroll itself (on iOS the
+// scroll happens off the main thread, so script-driven transforms trail it).
+const SCROLL_TIMELINE = typeof window.ScrollTimeline === 'function';
+
 function release(child) {
 	child.style.transform = '';
 	child.style.transformOrigin = '';
@@ -394,16 +430,19 @@ export function initRift(root) {
 		const cx = vw / 2;
 		const cy = -R / 3; // center sits above the viewport: only the bottom third shows
 
+		const g = { cx, cy, yStart: cy + R * (1.35 + 0.5 * PULL), yEnd: cy + R * 0.5 };
+
 		const relayout = layoutDirty;
 		if (layoutDirty) {
 			measure();
+			if (useTimeline) buildTimeline(g);
 			layoutDirty = false;
 		}
 		const scrollY = window.scrollY;
 		const scrolled = scrollY !== lastScroll;
 		vel += ((lastScroll === null ? 0 : scrollY - lastScroll) - vel) * 0.15;
 		lastScroll = scrollY;
-		if (scrolled || relayout) pulling = applyPull(scrollY, R, cx, cy);
+		if (scrolled || relayout) pulling = useTimeline ? measurePull(scrollY, g) : applyPull(scrollY, g);
 
 		// The strands brighten while the hole feeds and their highlight drifts with scroll.
 		feed += (Math.min(1, pulling * 0.45) - feed) * 0.08;
@@ -425,50 +464,70 @@ export function initRift(root) {
 		if (fg) draw(fg, P, quality);
 	}
 
-	function applyPull(scrollY, R, cx, cy) {
-		const yStart = cy + R * (1.35 + 0.5 * PULL);
-		const yEnd = cy + R * 0.5;
-		let total = 0;
+	const pullAt = (box, scrollY, g) =>
+		Math.max(0, Math.min(1, (g.yStart - (box.top - scrollY + box.anchorOff)) / (g.yStart - g.yEnd)));
+
+	// Preferred path: one scroll-linked animation per block, keyframed by
+	// sampling pose() along the scroll range where that block is pulled in.
+	// Rebuilt whenever layout or the hole's size changes.
+	const useTimeline = SCROLL_TIMELINE && !reduce;
+	const timeline = useTimeline ? new window.ScrollTimeline({ source: document.documentElement, axis: 'block' }) : null;
+	let anims = [];
+	function buildTimeline(g) {
+		for (const a of anims) a.cancel();
+		anims = [];
+		const se = document.scrollingElement || document.documentElement;
+		const max = se.scrollHeight - se.clientHeight;
+		if (max <= 0) return;
+		const span = g.yStart - g.yEnd;
+		const SAMPLES = 16;
 		for (const box of boxes) {
 			const child = box.child;
 			if (!child) continue;
-			const ax = box.x;
-			const ay = box.top - scrollY + box.anchorOff;
-			const t = reduce ? 0 : Math.max(0, Math.min(1, (yStart - ay) / (yStart - yEnd)));
+			const s0 = box.top + box.anchorOff - g.yStart; // scroll position where the pull starts
+			if (s0 >= max) continue; // never reaches the hole
+			const tAt = (p) => Math.max(0, Math.min(1, (p - s0) / span));
+			const frames = [];
+			const add = (p) => frames.push({ offset: Math.max(0, Math.min(1, p / max)), ...pose(box, tAt(p), g) });
+			add(0);
+			for (let k = 0; k <= SAMPLES; k++) {
+				const p = s0 + (span * k) / SAMPLES;
+				if (p > 0 && p < max) add(p);
+			}
+			add(max);
+			child.style.transformOrigin = `${(box.w / 2).toFixed(1)}px ${box.anchorOff.toFixed(1)}px`;
+			anims.push(child.animate(frames, { timeline, fill: 'both' }));
+		}
+	}
+
+	// With the timeline path, script only needs the total pull to brighten the strands.
+	function measurePull(scrollY, g) {
+		let total = 0;
+		for (const box of boxes) total += Math.sin(Math.PI * pullAt(box, scrollY, g));
+		return total;
+	}
+
+	// Fallback path: write transforms from script each frame the scroll moves.
+	function applyPull(scrollY, g) {
+		let total = 0;
+		const promote = g.yStart + 240; // promote layers just before they start moving
+		for (const box of boxes) {
+			const child = box.child;
+			if (!child) continue;
+			const t = reduce ? 0 : pullAt(box, scrollY, g);
+			const near = !reduce && box.top - scrollY + box.anchorOff < promote;
 			if (t <= 0) {
 				if (child.__sucked) release(child);
+				child.style.willChange = near ? 'transform, opacity' : '';
 				continue;
 			}
 			total += Math.sin(Math.PI * t);
-
-			// Spiral the anchor toward the hole's center while shrinking and
-			// stretching along the infall direction. Only transform and opacity
-			// change, so the browser can composite without repainting.
-			const e = t * t;
-			const rx = ax - cx;
-			const ry = ay - cy;
-			const th = e * 1.15;
-			const s = 1 - e;
-			const nx = (rx * Math.cos(th) - ry * Math.sin(th)) * s;
-			const ny = (rx * Math.sin(th) + ry * Math.cos(th)) * s;
-			const tx = cx + nx - ax;
-			const ty = cy + ny - ay;
-			const phi = Math.atan2(-ny, -nx);
-			const k = Math.max(0.04, 1 - 0.94 * e);
-			const sx = 1 + 0.9 * e * e;
-			const sy = 1 - 0.45 * e;
-			const fade = t < 0.65 ? 1 : 1 - (t - 0.65) / 0.35;
-
-			if (!child.__sucked) {
-				child.style.willChange = 'transform, opacity';
-				child.__sucked = true;
-			}
+			const p = pose(box, t, g);
+			child.__sucked = true;
+			child.style.willChange = 'transform, opacity';
 			child.style.transformOrigin = `${(box.w / 2).toFixed(1)}px ${box.anchorOff.toFixed(1)}px`;
-			child.style.transform =
-				`translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) ` +
-				`rotate(${phi.toFixed(4)}rad) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) rotate(${(-phi).toFixed(4)}rad) ` +
-				`rotate(${th.toFixed(4)}rad) scale(${k.toFixed(4)})`;
-			child.style.opacity = Math.max(0, fade).toFixed(3);
+			child.style.transform = p.transform;
+			child.style.opacity = p.opacity.toFixed(3);
 		}
 		return total;
 	}

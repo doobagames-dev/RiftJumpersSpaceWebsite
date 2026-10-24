@@ -74,6 +74,20 @@ html {
 	pointer-events: none;
 }
 
+/* A solid strip at the very top: iOS Safari tints its status-bar area from
+   fixed elements touching the top edge. Without it, the transparent canvas
+   lets blocks flying into the hole show through the bar. */
+.rift-topcap {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 2px;
+	background: #000;
+	z-index: 4;
+	pointer-events: none;
+}
+
 /* Shown only when WebGL is unavailable. */
 .rift-fallback {
 	display: none;
@@ -168,6 +182,7 @@ html {
 }
 
 .rift-logo {
+	position: relative;
 	margin: 0;
 	width: min(100%, 940px);
 	display: flex;
@@ -175,12 +190,22 @@ html {
 	align-items: stretch;
 	font-family: 'Akira Expanded', 'Michroma', sans-serif;
 	font-weight: 400;
-	font-size: clamp(40px, 8.2vw, 112px);
+	font-size: clamp(32px, 8.2vw, 112px);
 	line-height: 0.98;
 	text-transform: uppercase;
 	text-align: left;
 	transform: skewX(-11deg);
-	filter: drop-shadow(0 0 18px var(--accent-glow));
+}
+
+/* Glow as a painted gradient rather than filter: drop-shadow. Filters get
+   clipped to the layer bounds and re-rasterized while Safari animates them. */
+.rift-logo::before {
+	content: '';
+	position: absolute;
+	inset: -18% -8%;
+	z-index: -1;
+	background: radial-gradient(closest-side, rgb(0 244 253 / 0.2), rgb(0 244 253 / 0.06) 60%, transparent);
+	pointer-events: none;
 }
 
 .rift-logo-row {
@@ -190,6 +215,10 @@ html {
 }
 
 .rift-scanline {
+	/* Padding keeps glyph overhang inside the box that background-clip: text
+	   paints, so the first and last letters never get shaved off. */
+	padding: 0 0.12em;
+	margin: 0 -0.12em;
 	color: transparent;
 	background: repeating-linear-gradient(
 		180deg,
