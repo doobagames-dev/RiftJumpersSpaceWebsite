@@ -1,0 +1,65 @@
+---
+import "../styles/global.css";
+
+const CONTACT_EMAIL = 'doobagames@gmail.com';
+---
+
+<div id="container" class="min-h-screen relative">
+	<div class='stars'></div>
+	<div class='twinkling'></div>
+	<div class='clouds'></div>
+
+	<main class="relative z-10 flex flex-col max-w-screen-md mx-auto px-4 sm:px-10 py-24">
+		<header class="mb-8 text-center">
+			<a href="/" class="text-sm text-white/70 hover:text-white">← Back to Rift Jumpers</a>
+			<h1 class="mt-4 mb-2 text-4xl sm:text-5xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">
+				Delete your Rift Jumpers account
+			</h1>
+		</header>
+
+		<article class="policy relative border-2 rounded-lg border-teal-400/30 bg-black/90 text-white px-6 py-8 sm:px-10">
+			<p>
+				You can delete your Rift Jumpers account and its data at any time, in the game or by email. Deletion is permanent
+				and cannot be undone.
+			</p>
+
+			<h2 id="what-is-deleted">What is deleted</h2>
+			<ul>
+				<li>your account: user ID, username, and, for a full account, your email address and password;</li>
+				<li>your online stats, accolades and player card;</li>
+				<li>your leaderboard entries;</li>
+				<li>every sign-in credential for the account, on all your devices.</li>
+			</ul>
+			<p>
+				Feedback you sent is kept to help us fix the game, but with nothing that identifies you: your user ID, username,
+				install ID and IP address are removed from it.
+			</p>
+			<p>Deleting in the game also clears your saved progress on that device.</p>
+			<p>Guest accounts (named like Pilot-1234) are also deleted automatically after 7 days without play.</p>
+
+			<h2 id="in-game">Delete in the game</h2>
+			<ol>
+				<li>On the main menu, tap the account button (the person icon, top left).</li>
+				<li>Tap DELETE ACCOUNT. (A guest account shows DELETE GUEST.)</li>
+				<li>Enter your password (a guest needs none) and tap DELETE.</li>
+			</ol>
+			<p>You will see ACCOUNT DELETED (or GUEST DELETED) when it is done.</p>
+
+			<h2 id="by-email">Delete by email</h2>
+			<p>
+				If you cannot use the game, email
+				<a href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20account`}>{CONTACT_EMAIL}</a>
+				with the subject "Delete my account" and:
+			</p>
+			<ul>
+				<li>your username, and</li>
+				<li>for a full account, send it from the email address on the account.</li>
+			</ul>
+			<p>
+				We will confirm the request, delete the account and everything listed above within 30 days, and reply when it is
+				done.
+			</p>
+			<p>For more about what Rift Jumpers collects, see the <a href="/privacy-policy">privacy policy</a>.</p>
+		</article>
+	</main>
+</div>

@@ -1,0 +1,156 @@
+---
+import "../styles/global.css";
+
+const CONTACT_EMAIL = 'doobagames@gmail.com';
+---
+
+<div id="container" class="min-h-screen relative">
+	<div class='stars'></div>
+	<div class='twinkling'></div>
+	<div class='clouds'></div>
+
+	<main class="relative z-10 flex flex-col max-w-screen-md mx-auto px-4 sm:px-10 py-24">
+		<header class="mb-8 text-center">
+			<a href="/" class="text-sm text-white/70 hover:text-white">← Back to Rift Jumpers</a>
+			<h1 class="mt-4 mb-2 text-4xl sm:text-5xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">
+				Rift Jumpers Privacy Policy
+			</h1>
+			<p class="text-white/80">Effective October 31, 2026</p>
+		</header>
+
+		<article class="policy relative border-2 rounded-lg border-teal-400/30 bg-black/90 text-white px-6 py-8 sm:px-10">
+			<p>
+				Rift Jumpers is a game made by Dooba Games ("we", "us"). This policy explains what the game collects, why, who
+				handles it, how long it is kept, and how to delete it.
+			</p>
+
+			<h2 id="in-short">In short</h2>
+			<ul>
+				<li>Single player needs no account. Until you play online, your progress stays on your device.</li>
+				<li>Playing online gives you an account. If you have none, the game makes a guest account for you. We keep its username, stats and accolades so online play, leaderboards and player cards work.</li>
+				<li>Feedback you send from the game reaches us with your message and details about your device and where you were in the game.</li>
+				<li>No ads, no analytics or tracking tools, no advertising ID. We do not sell your data or share it for advertising.</li>
+				<li>You can delete your account and its data in the game at any time, or by emailing us.</li>
+			</ul>
+
+			<h2 id="what-we-collect">What we collect, and when</h2>
+
+			<h3>Install ID (every request to our game service)</h3>
+			<p>
+				The first time the game starts, it makes a random ID for that installation. It is not your device's hardware ID or
+				advertising ID. The game sends it with each request to our game service, which uses it to sign you in, to hold your
+				place in the queue when the servers are busy, and to protect the service from abuse. We store it with your
+				account's sign-in details and with any feedback you send.
+			</p>
+
+			<h3>Single player</h3>
+			<p>
+				Single player works without an account. The game downloads its settings and can show public information such as
+				leaderboards. Your single-player progress is saved on your device. Once you play online, your single-player stats
+				and accolades are stored with your account too, including those earned before you signed in.
+			</p>
+
+			<h3>Online play (multiplayer)</h3>
+			<p>
+				Entering multiplayer signs you in. If you have no account, the game creates a guest account with a generated name
+				(such as Pilot-1234). For every account, guest or full, we store:
+			</p>
+			<ul>
+				<li>a user ID and your username;</li>
+				<li>your single-player and multiplayer stats, your accolades, and the accolade shown on your player card;</li>
+				<li>a sign-in credential for your device, with its install ID, its platform (Android or iOS) and when it was last used. When you log out, we revoke your device's credential, so it can no longer sign in; the account's other devices stay signed in.</li>
+			</ul>
+			<p>If you choose to create a full account, we also store:</p>
+			<ul>
+				<li>your email address, which you can use to log in;</li>
+				<li>your password, stored only as a salted hash. We cannot read it.</li>
+			</ul>
+			<p>
+				Other players see your username in matches and on your player card. Full accounts also appear by username on the
+				leaderboards; guest accounts never do. The game has no text or voice chat.
+			</p>
+
+			<h3>Feedback</h3>
+			<p>When you send feedback from the game, we receive:</p>
+			<ul>
+				<li>your message and any tags you chose;</li>
+				<li>your device model, operating system and version, language and region setting, and screen size;</li>
+				<li>the game's build and platform, and where in the game you were (for example the mission, level and time into the run, or the match you were in);</li>
+				<li>if you are signed in, your user ID and username;</li>
+				<li>your install ID.</li>
+			</ul>
+
+			<h3>IP address</h3>
+			<p>
+				Like any internet service, our servers see your IP address when the game connects. We use it to answer the request
+				and, in memory only, to limit how often one address can call the service. We do not store it.
+			</p>
+
+			<h2 id="why-we-use-it">Why we use it</h2>
+			<ul>
+				<li>To run the game's online features: signing in, matchmaking, the queue, match results, stats, leaderboards and player cards.</li>
+				<li>To keep the service secure: limiting abuse and protecting accounts.</li>
+				<li>To fix and improve the game: reading feedback, with the device and game details that help us reproduce a problem.</li>
+			</ul>
+			<p>We do not use your data for advertising or profiling, and we do not sell it.</p>
+
+			<h2 id="who-handles-your-data">Who handles your data</h2>
+			<ul>
+				<li><strong>Amazon Web Services (AWS)</strong> hosts our servers and database, in the United States.</li>
+				<li><strong>Google Sheets</strong> receives a copy of each feedback entry so we can read it: the message, tags, your username, and the device and game details. Never your IP address or install ID.</li>
+			</ul>
+			<p>Both handle data only on our behalf. We do not share your data with anyone else.</p>
+
+			<h2 id="security">Security</h2>
+			<p>
+				Sign-in, accounts, stats, settings and feedback travel over encrypted connections (HTTPS). Live gameplay during a
+				match is sent over an unencrypted connection: it carries your user ID, your username and the match's gameplay. Your
+				email address and password never travel over it.
+			</p>
+
+			<h2 id="retention">How long we keep it</h2>
+			<ul>
+				<li><strong>Guest accounts</strong> are deleted automatically, with everything listed under "Online play", after 7 days without play.</li>
+				<li><strong>Full accounts</strong> are kept until you delete them.</li>
+				<li><strong>Feedback</strong> is kept to help us fix the game. When an account is deleted, feedback it sent is kept with nothing that identifies you: the user ID, username and install ID are removed, and the username is removed from the Google Sheets copy. Feedback sent while signed out carries no username or user ID, only the install ID.</li>
+				<li><strong>Sign-in credentials</strong> are kept until the account is deleted. One revoked at logout is kept as revoked and can never sign in again.</li>
+				<li><strong>Server logs:</strong> our game servers' logs are deleted after 7 days, and our game service's own logs after at most 15 days.</li>
+				<li><strong>On your device:</strong> your saved progress stays on the device until you log out, delete your account, or uninstall the game.</li>
+			</ul>
+
+			<h2 id="delete-account">Deleting your account and data</h2>
+			<p>
+				<strong>In the game:</strong> on the main menu, tap the account button (the person icon, top left), then
+				DELETE ACCOUNT (a guest account shows DELETE GUEST). Confirm with your password (a guest needs none) and tap DELETE.
+				This permanently deletes your account, your stats, accolades, leaderboard entries and sign-in credentials, and
+				removes your identity from any feedback you sent. It also clears your saved progress on that device. It cannot be
+				undone.
+			</p>
+			<p>
+				<strong>Without the game:</strong> see <a href="/delete-account">riftjumpers.space/delete-account</a>, or email
+				<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+			</p>
+
+			<h2 id="children">Children</h2>
+			<p>
+				Rift Jumpers is not directed at children under 13, and we do not knowingly collect personal data from them. If you
+				believe a child under 13 has an account, email us and we will delete it.
+			</p>
+
+			<h2 id="your-choices">Your choices</h2>
+			<p>
+				To ask what data we hold about you, or to have it deleted, email
+				<a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> from the address on your account, or tell us your username.
+			</p>
+
+			<h2 id="changes">Changes to this policy</h2>
+			<p>
+				If we change this policy, we will update this page and the date at the top. If the game starts collecting something
+				new, we will say so here before it does.
+			</p>
+
+			<h2 id="contact">Contact</h2>
+			<p>Email Dooba Games at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.</p>
+		</article>
+	</main>
+</div>

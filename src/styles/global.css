@@ -102,3 +102,49 @@
   .teal-glow.delay-5::before { animation: spin-border 4s linear infinite 1.5s; }
   
   
+  /* Long-form text pages (privacy policy, account deletion) */
+  .policy h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgb(0, 244, 253);
+    scroll-margin-top: 1.5rem;
+  }
+
+  .policy h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .policy p,
+  .policy ul,
+  .policy ol {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  .policy ul,
+  .policy ol {
+    padding-left: 1.25rem;
+  }
+
+  .policy ul { list-style: disc; }
+  .policy ol { list-style: decimal; }
+
+  .policy li {
+    margin-bottom: 0.4rem;
+  }
+
+  .policy strong {
+    color: #fff;
+  }
+
+  .policy a {
+    color: rgb(0, 244, 253);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+  }

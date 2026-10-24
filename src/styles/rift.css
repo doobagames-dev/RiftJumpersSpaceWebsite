@@ -1,0 +1,637 @@
+/* Home page: the rift. Fonts match the game (Wobble Planet):
+   Akira Expanded for the logo + display type, Michroma for UI/body text. */
+
+@font-face {
+	font-family: 'Akira Expanded';
+	src: url('/fonts/akira-expanded.otf') format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+html {
+	background: #03040a;
+}
+
+.rift {
+	/* Shadow radius of the black hole. The visible part (shadow + strands)
+	   reaches about 1.16R down, so 21vh keeps it under a quarter of the
+	   viewport. Keep in sync with black-hole.js, which reads it back from the
+	   foreground canvas height (R * 2.2). */
+	--rift-r: clamp(80px, min(26vw, 21vh), 380px);
+	--rift-r: clamp(80px, min(26vw, 21svh), 380px);
+	--accent: #00f4fd;
+	--accent-light: #80fafe;
+	--accent-scan: rgb(0 244 253 / 0.5);
+	--accent-glow: rgb(0 244 253 / 0.55);
+	--accent-soft: rgb(0 244 253 / 0.14);
+	--accent-line: rgb(0 244 253 / 0.42);
+	--ink: #f2f6fb;
+	--text: #e6ecf5;
+	--muted: #a9b4c6;
+	--faint: #8793a8;
+	--card: rgb(9 12 22 / 0.8);
+	--hairline: rgb(255 255 255 / 0.1);
+
+	position: relative;
+	min-height: 100vh;
+	background: #03040a;
+	color: var(--text);
+	font-family: 'Michroma', 'Eurostile', sans-serif;
+	overflow-x: clip;
+}
+
+.rift a:focus-visible,
+.rift button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+
+/* ---- Black hole layers ---- */
+
+.rift-bg {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+	display: block;
+	pointer-events: none;
+}
+
+.rift-fg {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: calc(var(--rift-r) * 2.2);
+	z-index: 3;
+	display: block;
+	pointer-events: none;
+}
+
+/* Shown only when WebGL is unavailable. */
+.rift-fallback {
+	display: none;
+	position: fixed;
+	left: 50%;
+	top: calc(var(--rift-r) / -3);
+	width: calc(var(--rift-r) * 2);
+	height: calc(var(--rift-r) * 2);
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	background: #000;
+	box-shadow: 0 0 0 1px rgb(242 246 251 / 0.5), 0 0 60px rgb(242 246 251 / 0.18);
+	z-index: 3;
+	pointer-events: none;
+}
+
+.rift.no-gl .rift-fallback {
+	display: block;
+}
+
+/* Every [data-suck] block is a layout anchor that never moves; its first
+   child is what black-hole.js pulls into the hole. */
+[data-suck] {
+	display: flex;
+}
+
+[data-suck] > * {
+	flex: 1;
+}
+
+/* ---- Layout ---- */
+
+.rift-section {
+	position: relative;
+	z-index: 1;
+	max-width: 1120px;
+	margin: 0 auto;
+	box-sizing: border-box;
+	padding: 160px clamp(16px, 4vw, 40px) 0;
+}
+
+.rift-hero {
+	padding-top: calc(var(--rift-r) * 1.3 + 24px);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	gap: 30px;
+}
+
+.rift-eyebrow {
+	margin: 0;
+	font-size: 11px;
+	letter-spacing: 0.24em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+
+.rift-display {
+	margin: 0;
+	font-family: 'Akira Expanded', 'Michroma', sans-serif;
+	font-weight: 400;
+	text-transform: uppercase;
+	color: var(--ink);
+}
+
+.rift-h2 {
+	font-size: clamp(28px, 4.2vw, 52px);
+	line-height: 1.05;
+}
+
+.rift-heading {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.rift-body {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.9;
+	color: var(--muted);
+}
+
+/* ---- Logo ---- */
+
+.rift-logo-wrap {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 22px;
+}
+
+.rift-logo {
+	margin: 0;
+	width: min(100%, 940px);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	font-family: 'Akira Expanded', 'Michroma', sans-serif;
+	font-weight: 400;
+	font-size: clamp(40px, 8.2vw, 112px);
+	line-height: 0.98;
+	text-transform: uppercase;
+	text-align: left;
+	transform: skewX(-11deg);
+	filter: drop-shadow(0 0 18px var(--accent-glow));
+}
+
+.rift-logo-row {
+	display: flex;
+	align-items: center;
+	gap: 0.16em;
+}
+
+.rift-scanline {
+	color: transparent;
+	background: repeating-linear-gradient(
+		180deg,
+		var(--accent-light) 0 3px,
+		var(--accent-scan) 3px 5px
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+}
+
+.rift-speedlines {
+	flex: 1;
+	align-self: stretch;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 0.075em;
+	padding: 0.06em 0;
+}
+
+.rift-speedlines span {
+	display: block;
+	height: 0.065em;
+	background: var(--accent-light);
+}
+
+.rift-speedlines span:nth-child(1) { margin-left: 0.34em; }
+.rift-speedlines span:nth-child(2) { margin-left: 0.2em; }
+.rift-speedlines span:nth-child(3) { margin-left: 0.08em; }
+
+.rift-tagline {
+	margin: 0;
+	max-width: 640px;
+	font-size: clamp(13px, 1.4vw, 16px);
+	line-height: 1.85;
+	color: #c3ccda;
+}
+
+.rift-scroll-cue {
+	margin: 24px 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	font-size: 10px;
+	letter-spacing: 0.3em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+
+/* ---- Buttons ---- */
+
+.rift-stores {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	justify-content: center;
+}
+
+.rift-store {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 58px;
+	padding: 0 24px 0 18px;
+	border-radius: 14px;
+	text-decoration: none;
+	transition: background-color 0.15s, border-color 0.15s;
+}
+
+.rift-store svg {
+	width: 24px;
+	height: 24px;
+	flex: none;
+}
+
+.rift-store-text {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 5px;
+	text-align: left;
+}
+
+.rift-store-small {
+	font-size: 9px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.rift-store-name {
+	font-family: 'Akira Expanded', 'Michroma', sans-serif;
+	font-size: 13px;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.rift-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 46px;
+	padding: 0 18px;
+	border-radius: 12px;
+	text-decoration: none;
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	transition: background-color 0.15s, border-color 0.15s;
+}
+
+.rift-btn svg {
+	width: 14px;
+	height: 10px;
+}
+
+.rift-light {
+	background: var(--ink);
+	color: #05060b;
+}
+
+.rift-light:hover {
+	background: #ffffff;
+	color: #05060b;
+}
+
+.rift-store.rift-light {
+	box-shadow: 0 0 32px var(--accent-soft);
+}
+
+.rift-ghost {
+	background: rgb(9 12 22 / 0.7);
+	border: 1px solid rgb(255 255 255 / 0.24);
+	color: var(--ink);
+}
+
+.rift-ghost:hover {
+	border-color: rgb(255 255 255 / 0.55);
+	color: #ffffff;
+}
+
+/* ---- Video ---- */
+
+.rift-video {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.rift-video-frame {
+	position: relative;
+	border-radius: 20px;
+	overflow: hidden;
+	border: 1px solid var(--accent-line);
+	box-shadow: 0 0 90px var(--accent-soft);
+	background: #000;
+}
+
+.rift-video-frame video {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.rift-play {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 88px;
+	height: 88px;
+	margin: -44px 0 0 -44px;
+	border: 0;
+	border-radius: 50%;
+	background: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 8px 32px rgb(0 0 0 / 0.45);
+	cursor: pointer;
+	transition: transform 0.15s;
+}
+
+.rift-play:hover {
+	transform: scale(1.06);
+}
+
+.rift-play svg {
+	width: 30px;
+	height: 30px;
+	margin-left: 5px;
+}
+
+.rift-play[hidden] {
+	display: none;
+}
+
+.rift-caption {
+	font-size: 11px;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--faint);
+}
+
+/* ---- The run ---- */
+
+.rift-run {
+	list-style: none;
+	margin: 28px 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.rift-run-item {
+	display: flex;
+	align-items: baseline;
+	gap: clamp(16px, 3vw, 40px);
+	padding: 30px 0;
+	border-top: 1px solid var(--hairline);
+}
+
+.rift-run li:last-child .rift-run-item {
+	border-bottom: 1px solid var(--hairline);
+}
+
+.rift-run-num {
+	flex: none;
+	font-size: 12px;
+	letter-spacing: 0.2em;
+	color: var(--accent);
+}
+
+.rift-run-text {
+	font-size: clamp(22px, 4.4vw, 56px);
+	line-height: 1.08;
+}
+
+/* ---- Grids + cards ---- */
+
+.rift-grid {
+	margin-top: 40px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 16px;
+}
+
+.rift-grid-4 {
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.rift-grid + .rift-grid {
+	margin-top: 16px;
+}
+
+.rift-tile {
+	aspect-ratio: 1 / 1;
+	box-sizing: border-box;
+	padding: 28px;
+	border-radius: 18px;
+	background: var(--card);
+	border: 1px solid rgb(255 255 255 / 0.08);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rift-tile img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.rift-world {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	padding: 20px 22px;
+	border-radius: 18px;
+	background: var(--card);
+	border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.rift-world img {
+	width: 60px;
+	height: 60px;
+	flex: none;
+}
+
+.rift-world span {
+	font-size: 16px;
+}
+
+.rift-card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 18px;
+	padding: 32px;
+	border-radius: 20px;
+	background: var(--card);
+	border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.rift-card h3 {
+	font-size: 22px;
+}
+
+.rift-icon {
+	width: 52px;
+	height: 52px;
+	border-radius: 14px;
+	border: 1px solid var(--accent-line);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--accent);
+}
+
+.rift-icon svg {
+	width: 24px;
+	height: 24px;
+}
+
+.rift-dispatch {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 32px;
+	align-items: center;
+	box-sizing: border-box;
+	padding: clamp(28px, 5vw, 56px);
+	border-radius: 24px;
+	background: rgb(9 12 22 / 0.84);
+	border: 1px solid var(--accent-line);
+	box-shadow: 0 0 90px var(--accent-soft);
+}
+
+.rift-dispatch h2 {
+	font-size: clamp(26px, 3.4vw, 42px);
+	line-height: 1.08;
+}
+
+.rift-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.rift-member {
+	padding: 16px 16px 32px;
+}
+
+.rift-photo {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--accent-soft);
+	border: 1px solid var(--accent-line);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rift-photo span {
+	font-family: 'Akira Expanded', 'Michroma', sans-serif;
+	font-size: 32px;
+	color: var(--accent);
+}
+
+.rift-photo img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.rift-member-body {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 18px;
+	padding: 0 16px;
+}
+
+/* ---- Footer ---- */
+
+.rift-footer-bar {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 24px;
+	padding: 28px 0;
+	border-top: 1px solid var(--hairline);
+}
+
+.rift-wordmark {
+	font-family: 'Akira Expanded', 'Michroma', sans-serif;
+	font-size: 20px;
+	text-transform: uppercase;
+	color: var(--accent);
+	transform: skewX(-11deg);
+}
+
+.rift-footer-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 24px;
+}
+
+.rift-footer-nav a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	text-decoration: none;
+	color: var(--muted);
+}
+
+.rift-footer-nav a:hover {
+	color: #ffffff;
+}
+
+.rift-end {
+	position: relative;
+	z-index: 1;
+	height: 720px;
+	box-sizing: border-box;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding: 0 16px 72px;
+}
+
+.rift-end p {
+	margin: 0;
+	text-align: center;
+	font-size: 11px;
+	line-height: 2.2;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--faint);
+}

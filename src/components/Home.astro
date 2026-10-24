@@ -1,243 +1,269 @@
 ---
-import astroLogo from '../assets/astro.svg';
-import igLogo from '../assets/icon/instagram.png';
-import xLogo from '../assets/icon/twitter.png';
-import placeholderImgVideo from '../assets/video/planet-jump.webp';
-import multiplayerVideo from '../assets/video/planet-jump.mp4';
-import singleplayerVideo from '../assets/video/planet-jump.mp4';
+import ship1 from '../assets/image/ship-1.png';
+import ship2 from '../assets/image/ship-2.png';
+import ship3 from '../assets/image/ship-3.png';
+import ship4 from '../assets/image/ship-4.png';
+import bodyEarth from '../assets/image/body-earth.png';
+import bodyFire from '../assets/image/body-fire.png';
+import bodyGas from '../assets/image/body-gas.png';
+import bodyIce from '../assets/image/body-ice.png';
+import kylerPhoto from '../assets/image/kyler.jpg';
+import gameplayPoster from '../assets/video/planet-jump.png';
+import gameplayVideo from '../assets/video/planet-jump.mp4';
 import "../styles/global.css";
+import "../styles/rift.css";
+
+const ships = [
+	{ src: ship1, alt: 'Ship 1' },
+	{ src: ship2, alt: 'Ship 2' },
+	{ src: ship3, alt: 'Ship 3' },
+	{ src: ship4, alt: 'Ship 4' },
+];
+
+const worlds = [
+	{ src: bodyEarth, name: 'Earth' },
+	{ src: bodyFire, name: 'Fire' },
+	{ src: bodyGas, name: 'Gas' },
+	{ src: bodyIce, name: 'Ice' },
+];
+
+const run = ['Survive the black hole.', 'Fight off enemies.', 'Collect space weapons.'];
+
+const appleIcon = 'M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z';
+const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z';
 ---
 
-<div id="container" class="min-h-screen relative">
-	<div class='stars'></div>
-	<div class='twinkling'></div>
-	<div class='clouds'></div>
+<div class="rift" data-rift>
+	<canvas class="rift-bg" aria-hidden="true"></canvas>
+	<canvas class="rift-fg" aria-hidden="true"></canvas>
+	<div class="rift-fallback" aria-hidden="true"></div>
 
-	<main class="relative z-10 flex flex-col space-y-8 md:space-y-12 lg:space-y-16 max-w-screen-lg mx-auto px-10 py-50">
-		<section id="hero" class="text-white">
-			<!-- <img src={astroLogo.src} width="115" height="48" alt="Astro Homepage" /> -->
-			<section class="mb-10 w-full flex flex-col justify-center items-center">
-				<h1 class="mb-2 text-5xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">
-					Rift Jumper
+	<header class="rift-section rift-hero">
+		<div data-suck style="width: 100%;">
+			<div class="rift-logo-wrap">
+				<p class="rift-eyebrow">Beta 1.0 · Out now</p>
+				<h1 class="rift-logo" aria-label="Rift Jumpers">
+					<span class="rift-logo-row" aria-hidden="true">
+						<span class="rift-scanline">Rift</span>
+						<span class="rift-speedlines"><span></span><span></span><span></span><span></span></span>
+					</span>
+					<span class="rift-scanline" aria-hidden="true">Jumpers</span>
 				</h1>
-				<h2 class="text-white drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">Survive the black hole, fight off enemies, collect space weapons.</h2>
-			</section>
-			<section id="links" class="mb-10 w-full flex items-center justify-center">
-
-
-
-				<div class="relative items-center justify-center space-y-4 sm:flex sm:space-y-0 sm:space-x-4 rtl:space-x-reverse">
-  
-					<!-- Mac App Store Button -->
-					<a href="#" class="soft-teal-glow w-full sm:w-auto bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300 text-black rounded-lg inline-flex items-center justify-center px-4 py-2.5 shadow">
-					  <svg class="me-3 w-7 h-7 text-black" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="apple" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-						<path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"></path>
-					  </svg>
-					  <div class="text-left rtl:text-right">
-						<div class="mb-1 text-xs">Download on the</div>
-						<div class="-mt-1 font-sans text-sm font-semibold">Mac App Store</div>
-					  </div>
-					</a>
-				  
-					<!-- Google Play Button -->
-					<a href="#" class="soft-teal-glow w-full sm:w-auto bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300 text-black rounded-lg inline-flex items-center justify-center px-4 py-2.5 shadow">
-					  <svg class="me-3 w-7 h-7 text-black" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google-play" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-						<path fill="currentColor" d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"></path>
-					  </svg>
-					  <div class="text-left rtl:text-right">
-						<div class="mb-1 text-xs">Download at</div>
-						<div class="-mt-1 font-sans text-sm font-semibold">Google Play</div>
-					  </div>
-					</a>
-				  
-				  </div>
-				  
-
-				
-			</section>
-			<section class="mb-10 w-full flex items-center justify-center">
-
-
-
-					<!-- <div class="inline-flex rounded-md shadow-xs" role="group">
-						<button type="button" data-src={multiplayerVideo} class="inline-flex items-center px-4 py-2 text-sm font-medium text-white-900 bg-transparent border-2 border-white-900 rounded-s-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
-						<svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-							<path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
-						</svg>
-						Multiplayer
-						</button>
-						<button type="button" data-src={singleplayerVideo} class="inline-flex items-center px-4 py-2 text-sm font-medium text-white-900 bg-transparent border-2 border-white-900 rounded-e-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white dark:border-white dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:bg-gray-700">
-						<svg class="w-3 h-3 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-							<path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z"/>
-							<path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/>
-						</svg>
-						Single Player
-						</button>
-					</div> -->
-					
-					<div class="relative w-full border-2 rounded-lg shadow-sm border-teal-400/30 bg-transparent">
-						<div class="teal-glow"></div>
-						<video id="game-video" class="relative z-10 w-full rounded shadow-lg" controls autoplay muted>
-							<source src={multiplayerVideo} type="video/mp4">
-							Your browser does not support the video tag.
-						</video>
-					</div>
-
-
-
-			</section>
-		</section>
-		<section id="updates" class="flex flex-col justify-center items-center mt-20 relative">
-
-
-			<div class="relative w-full max-w-sm border-2 rounded-lg shadow-sm border-teal-400/30 bg-transparent">
-				<div class="teal-glow delay-1"></div>
-				<!-- <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg" src="/docs/images/blog/image-4.jpg" alt=""> -->
-				<div class="bg-black flex flex-col items-center pb-10 px-6 pt-6 relative z-10">
-					<h5 class="mb-2 text-2xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">Beta Release 1.0</h5>
-					<p class="mb-3 font-normal text-white drop-shadow-[0_0_8px_rgba(0,244,253,0.7)]">Game released! After hundreds of hours of effort, meetings, game concept changes, and development, the game is finally here! Get it on the App Store or the Google Play Store.</p>
-					<section id="links mt-4 relative">
-						<!-- Mac App Store Button -->
-						<a href="#" class="soft-teal-glow w-full sm:w-auto bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300 text-black rounded-lg inline-flex items-center justify-center px-4 py-2.5 shadow">
-							<svg class="me-3 w-7 h-7 text-black" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="apple" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-							<path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"></path>
-							</svg>
-							<div class="text-left rtl:text-right">
-							<div class="mb-1 text-xs">Download on the</div>
-							<div class="-mt-1 font-sans text-sm font-semibold">Mac App Store</div>
-							</div>
-						</a>
-						
-						<!-- Google Play Button -->
-						<a href="#" class=" soft-teal-glow w-full sm:w-auto bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-300 text-black rounded-lg inline-flex items-center justify-center px-4 py-2.5 shadow">
-							<svg class="me-3 w-7 h-7 text-black" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google-play" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-							<path fill="currentColor" d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"></path>
-							</svg>
-							<div class="text-left rtl:text-right">
-							<div class="mb-1 text-xs">Get in on</div>
-							<div class="-mt-1 font-sans text-sm font-semibold">Google Play</div>
-							</div>
-						</a>
-					</section>
-				</div>
 			</div>
+		</div>
 
+		<div data-suck>
+			<p class="rift-tagline">Survive the black hole, fight off enemies, collect space weapons.</p>
+		</div>
 
-		</section>
-
-		<section id="notifs" class="flex flex-col gap-16 md:flex-row md:space-x-8 space-y-8 md:space-y-0 justify-center mt-20">
-			
-
-			<div class="relative w-full max-w-sm border-2 rounded-lg shadow-sm border-teal-400/30 bg-transparent">
-				<div class="teal-glow delay-2"></div>
-			  
-				<div class="bg-black relative z-10 flex flex-col items-center pb-10 px-6 pt-6">
-					<img class="w-24 h-24 mb-3 rounded-full shadow-lg ring-4 ring-[rgba(0,244,253,0.7)] soft-teal-glow" 
-							src={xLogo.src}
-							alt="X" />
-					
-					<h5 class="mb-1 text-xl font-medium text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">
-						Discord
-					</h5>
-					
-					<span class="text-sm text-white drop-shadow-[0_0_8px_rgba(0,244,253,0.7)] text-center">
-						Join our community and talk to friends who play.
+		<div class="rift-stores">
+			<div data-suck>
+				<a href="#" class="rift-store rift-light">
+					<svg aria-hidden="true" viewBox="0 0 384 512"><path fill="currentColor" d={appleIcon}></path></svg>
+					<span class="rift-store-text">
+						<span class="rift-store-small">Download on the</span>
+						<span class="rift-store-name">Mac App Store</span>
 					</span>
-					
-					<div class="flex mt-4 md:mt-6">
-						<a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-white/50">
-						Follow us
-													<svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-								<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-							</svg>
-						</a>
-					</div>
-				
-				</div>
+				</a>
 			</div>
-
-			<div class="relative w-full max-w-sm border-2 group rounded-lg shadow-sm border-teal-400/30  bg-transparent relative">
-				<div class="teal-glow"></div>
-
-				<!-- Card content -->
-				<div class="bg-black flex flex-col items-center pb-10 px-6 pt-6 relative z-10">
-					<img class="w-24 h-24 mb-3 rounded-full shadow-lg ring-4 ring-[rgba(0,244,253,0.7)] soft-teal-glow" 
-							src={igLogo.src} 
-							alt="Instagram" />
-					
-					<h5 class="mb-1 text-xl font-medium text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">
-						Instagram
-					</h5>
-					
-					<span class="text-sm text-white drop-shadow-[0_0_8px_rgba(0,244,253,0.7)] text-center">
-						Major releases and upcoming features
+			<div data-suck>
+				<a href="#" class="rift-store rift-ghost">
+					<svg aria-hidden="true" viewBox="0 0 512 512" style="width: 22px; height: 22px;"><path fill="currentColor" d={playIcon}></path></svg>
+					<span class="rift-store-text">
+						<span class="rift-store-small" style="color: #c3ccda;">Get it on</span>
+						<span class="rift-store-name">Google Play</span>
 					</span>
-					
-					<div class="flex mt-4 md:mt-6">
-						<a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-white/50">
+				</a>
+			</div>
+		</div>
+
+		<div data-suck>
+			<p class="rift-scroll-cue">
+				Scroll to feed the rift
+				<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M6 9l6 6 6-6"></path></svg>
+			</p>
+		</div>
+	</header>
+
+	<section class="rift-section" style="padding-top: 112px;">
+		<div data-suck>
+			<figure class="rift-video">
+				<div class="rift-video-frame">
+					<video id="game-video" poster={gameplayPoster.src} preload="metadata" playsinline>
+						<source src={gameplayVideo} type="video/mp4" />
+						Your browser does not support the video tag.
+					</video>
+					<button id="game-video-play" type="button" class="rift-play" aria-label="Play gameplay video">
+						<svg aria-hidden="true" viewBox="0 0 24 24" fill="#05060b" stroke="#05060b" stroke-width="1.5" stroke-linejoin="round"><path d="M7 4.5v15l12-7.5z"></path></svg>
+					</button>
+				</div>
+				<figcaption class="rift-caption">Multiplayer gameplay</figcaption>
+			</figure>
+		</div>
+	</section>
+
+	<section class="rift-section">
+		<div data-suck>
+			<p class="rift-eyebrow">The run</p>
+		</div>
+		<ol class="rift-run">
+			{run.map((line, i) => (
+				<li data-suck>
+					<div class="rift-run-item">
+						<span class="rift-run-num">{String(i + 1).padStart(2, '0')}</span>
+						<span class="rift-display rift-run-text">{line}</span>
+					</div>
+				</li>
+			))}
+		</ol>
+	</section>
+
+	<section class="rift-section">
+		<div data-suck>
+			<div class="rift-heading">
+				<p class="rift-eyebrow">From the game</p>
+				<h2 class="rift-display rift-h2">Ships &amp; worlds</h2>
+			</div>
+		</div>
+		<div class="rift-grid rift-grid-4">
+			{ships.map((ship) => (
+				<div data-suck>
+					<div class="rift-tile"><img src={ship.src.src} alt={ship.alt} loading="lazy" /></div>
+				</div>
+			))}
+		</div>
+		<div class="rift-grid rift-grid-4">
+			{worlds.map((world) => (
+				<div data-suck>
+					<div class="rift-world">
+						<img src={world.src.src} alt="" loading="lazy" />
+						<span class="rift-display">{world.name}</span>
+					</div>
+				</div>
+			))}
+		</div>
+	</section>
+
+	<section class="rift-section">
+		<div data-suck>
+			<article class="rift-dispatch">
+				<div class="rift-heading">
+					<p class="rift-eyebrow">Dispatch</p>
+					<h2 class="rift-display">Beta Release 1.0</h2>
+				</div>
+				<div class="rift-heading" style="gap: 24px;">
+					<p class="rift-body">Game released! After hundreds of hours of effort, meetings, game concept changes, and development, the game is finally here! Get it on the App Store or the Google Play Store.</p>
+					<div class="rift-actions">
+						<a href="#" class="rift-btn rift-light" style="min-height: 48px; padding: 0 20px;">Mac App Store</a>
+						<a href="#" class="rift-btn rift-ghost" style="min-height: 48px; padding: 0 20px;">Google Play</a>
+					</div>
+				</div>
+			</article>
+		</div>
+	</section>
+
+	<section class="rift-section">
+		<div data-suck>
+			<div class="rift-heading">
+				<p class="rift-eyebrow">Stay in orbit</p>
+				<h2 class="rift-display rift-h2">Community</h2>
+			</div>
+		</div>
+		<div class="rift-grid">
+			<div data-suck>
+				<article class="rift-card">
+					<div class="rift-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"></path><path d="M9 11.5h.01M15 11.5h.01"></path></svg>
+					</div>
+					<h3 class="rift-display">Discord</h3>
+					<p class="rift-body">Join our community and talk to friends who play.</p>
+					<a href="#" class="rift-btn rift-light">
+						Join the server
+						<svg aria-hidden="true" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h12m0 0L9 1m4 4L9 9"></path></svg>
+					</a>
+				</article>
+			</div>
+			<div data-suck>
+				<article class="rift-card">
+					<div class="rift-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><path d="M17 7h.01"></path></svg>
+					</div>
+					<h3 class="rift-display">Instagram</h3>
+					<p class="rift-body">Major releases and upcoming features.</p>
+					<a href="#" class="rift-btn rift-light">
 						See the updates
-						<svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-							<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-						</svg>
-						</a>
-					</div>
-				
-				</div>
-			</div>
-	   
-			  
-		</section>
-
-		<section id="devs" class="flex flex-col gap-16 md:flex-row md:space-x-8 space-y-8 md:space-y-0 justify-center mt-20">
-
-			<div class="relative w-full max-w-sm border-2 group rounded-lg shadow-sm border-teal-400/30  bg-transparent relative">
-				<div class="teal-glow delay-3"></div>
-			  
-				<div class="bg-black flex flex-col items-center relative z-10">
-					<a href="#">
-						<img class="rounded-t-lg" src="https://alexzahnaudio.com/assets/img/about.png" alt="" />
+						<svg aria-hidden="true" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h12m0 0L9 1m4 4L9 9"></path></svg>
 					</a>
-					<div class="p-5">
-						<a href="#">
-							<h5 class="mb-2 text-2xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">Alex Zahn</h5>
-						</a>
-						<p class="mb-3 font-normal text-white drop-shadow-[0_0_8px_rgba(0,244,253,0.7)]">Lead developer, game designer, audio engineer, co-founder.</p>
-						
-						<a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-white/50">
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<section class="rift-section">
+		<div data-suck>
+			<div class="rift-heading">
+				<p class="rift-eyebrow">Built by</p>
+				<h2 class="rift-display rift-h2">The team</h2>
+			</div>
+		</div>
+		<div class="rift-grid">
+			<div data-suck>
+				<article class="rift-card rift-member">
+					<div class="rift-photo">
+						<span aria-hidden="true">AZ</span>
+						<img src="https://alexzahnaudio.com/assets/img/about.png" alt="Portrait of Alex Zahn" loading="lazy" />
+					</div>
+					<div class="rift-member-body">
+						<h3 class="rift-display">Alex Zahn</h3>
+						<p class="rift-body">Lead developer, game designer, audio engineer, co-founder.</p>
+						<a href="#" class="rift-btn rift-ghost">
 							Twitter
-							<svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-								<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-							</svg>
+							<svg aria-hidden="true" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h12m0 0L9 1m4 4L9 9"></path></svg>
 						</a>
 					</div>
-				</div>
+				</article>
 			</div>
-
-			<div class="relative flex w-full max-w-sm border-2 group rounded-lg shadow-sm border-teal-400/30  bg-transparent relative">
-				<div class="teal-glow delay-5"></div>
-		  
-				<div class="bg-black flex-1 flex flex-col items-center relative z-10">
-					<a href="#">
-						<img class="rounded-t-lg" src="https://www.landfx.com/images/elements/who-we-are/people/kyler.jpg" alt="" />
-					</a>
-					<div class="p-5">
-						<a href="#">
-							<h5 class="mb-2 text-2xl font-bold tracking-tight text-[rgb(0,244,253)] drop-shadow-[0_0_10px_rgba(0,244,253,0.9)]">Kyler Gronner</h5>
-						</a>
-						<p class="mb-3 font-normal text-white drop-shadow-[0_0_8px_rgba(0,244,253,0.7)]">Developer, game designer, co-founder.</p>
-						<a href="#" class="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-white/50">
+			<div data-suck>
+				<article class="rift-card rift-member">
+					<div class="rift-photo">
+						<span aria-hidden="true">KG</span>
+						<img src={kylerPhoto.src} alt="Kyler Gronner on a campus bench holding two white dogs" loading="lazy" style="object-position: 50% 30%;" />
+					</div>
+					<div class="rift-member-body">
+						<h3 class="rift-display">Kyler Gronner</h3>
+						<p class="rift-body">Developer, game designer, co-founder.</p>
+						<a href="#" class="rift-btn rift-ghost">
 							LinkedIn
-							<svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-								<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-							</svg>
+							<svg aria-hidden="true" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5h12m0 0L9 1m4 4L9 9"></path></svg>
 						</a>
 					</div>
-				</div>
+				</article>
+			</div>
+		</div>
+	</section>
 
-		</section>
-	</main>
+	<footer class="rift-section">
+		<div data-suck>
+			<div class="rift-footer-bar">
+				<span class="rift-wordmark">Rift Jumpers</span>
+				<nav class="rift-footer-nav" aria-label="Footer">
+					<a href="#">Mac App Store</a>
+					<a href="#">Google Play</a>
+					<a href="#">Discord</a>
+					<a href="#">Instagram</a>
+					<a href="/privacy-policy">Privacy Policy</a>
+					<a href="/delete-account">Delete Account</a>
+				</nav>
+			</div>
+		</div>
+	</footer>
 
-	
+	<div class="rift-end">
+		<p>Event horizon reached<br />Scroll up — everything comes back out</p>
+	</div>
 </div>
 
-<script src="../js/page.js"></script>
+<script>
+	import '../js/black-hole.js';
+	import '../js/page.js';
+</script>

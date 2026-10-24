@@ -1,3 +1,7 @@
+---
+const { title = 'Rift Jumpers' } = Astro.props;
+---
+
 <!doctype html>
 <html lang="en" class="h-full">
 	<head>
@@ -5,7 +9,11 @@
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Rift Jumper</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" />
+		<link rel="preload" href="/fonts/akira-expanded.otf" as="font" type="font/otf" crossorigin />
+		<title>{title}</title>
 	</head>
 	<body class="h-full">
 		<slot />
