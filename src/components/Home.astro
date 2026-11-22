@@ -29,6 +29,10 @@ const worlds = [
 	{ src: bodyIce, name: 'Ice' },
 ];
 
+// The public link of TestFlight's Public Alpha group (Wobble Planet docs/ios.md); every iOS button reads it.
+const testflightUrl = 'https://testflight.apple.com/join/8GbuG4dA';
+const iosHref = testflightUrl || '#';
+
 const run = ['Survive the black hole.', 'Fight off enemies.', 'Collect space weapons.'];
 
 // The source poster is a 2772px, 1.9 MB PNG; ship it as a ~1600px WebP instead.
@@ -65,11 +69,11 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 
 		<div class="rift-stores">
 			<div data-suck>
-				<a href="#" class="rift-store rift-light">
+				<a href={iosHref} class="rift-store rift-light">
 					<svg aria-hidden="true" viewBox="0 0 384 512"><path fill="currentColor" d={appleIcon}></path></svg>
 					<span class="rift-store-text">
-						<span class="rift-store-small">Download on the</span>
-						<span class="rift-store-name">Mac App Store</span>
+						<span class="rift-store-small">iPhone beta on</span>
+						<span class="rift-store-name">TestFlight</span>
 					</span>
 				</a>
 			</div>
@@ -161,7 +165,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 				<div class="rift-heading" style="gap: 24px;">
 					<p class="rift-body">Game released! After hundreds of hours of effort, meetings, game concept changes, and development, the game is finally here! Get it on the App Store or the Google Play Store.</p>
 					<div class="rift-actions">
-						<a href="#" class="rift-btn rift-light" style="min-height: 48px; padding: 0 20px;">Mac App Store</a>
+						<a href={iosHref} class="rift-btn rift-light" style="min-height: 48px; padding: 0 20px;">TestFlight</a>
 						<a href="#" class="rift-btn rift-ghost" style="min-height: 48px; padding: 0 20px;">Google Play</a>
 					</div>
 				</div>
@@ -254,7 +258,7 @@ const playIcon = 'M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 
 			<div class="rift-footer-bar">
 				<span class="rift-wordmark">Rift Jumpers</span>
 				<nav class="rift-footer-nav" aria-label="Footer">
-					<a href="#">Mac App Store</a>
+					<a href={iosHref}>TestFlight</a>
 					<a href="#">Google Play</a>
 					<a href="#">Discord</a>
 					<a href="#">Instagram</a>
